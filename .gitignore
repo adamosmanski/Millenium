@@ -6,3 +6,5 @@ Millenium.API/obj
 Millenium.Data/obj
 Millenium.Domain/obj
 Millenium.Application/obj
+Millenium.Application/bin
+Millenium.Domain/bin
