@@ -1,2 +1,10 @@
 ﻿.vs
 Millenium.View/obj
+Millenium.View/bin
+Millenium.API/bin
+Millenium.API/obj
+Millenium.Data/obj
+Millenium.Domain/obj
+Millenium.Application/obj
+Millenium.Application/bin
+Millenium.Domain/bin
