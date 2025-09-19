@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "Millenium.View\\Millenium.View.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Millenium.API\\Millenium.API.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
