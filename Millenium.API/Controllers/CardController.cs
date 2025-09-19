@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualBasic;
 using Millenium.Application.Queries;
+using Millenium.Data.Interfaces;
 using Millenium.Domain;
 
 namespace Millenium.API.Controllers
@@ -10,15 +11,47 @@ namespace Millenium.API.Controllers
     [Route("api/cards")]
     public class CardController : ControllerBase
     {
-        private readonly IMediator _mediator;
 
-        public CardController(IMediator mediator) => _mediator = mediator;
+    private readonly IMediator _mediator;
+        private readonly ICardRepository _cardRepository;
 
-        [HttpGet("actions")]
-        public async Task<IActionResult> GetActions([FromQuery] CardType type, [FromQuery] CardStatus status, [FromQuery] bool isPinSet)
+        public CardController(IMediator mediator, ICardRepository cardRepository)
         {
-            var actions = await _mediator.Send(new GetAllowedActionsQuery(type, status, isPinSet));
-            return Ok(actions);
+            _mediator = mediator;
+            _cardRepository = cardRepository;
+        }
+        [HttpGet("debug/all")]
+        public async Task<IActionResult> GetAllCardsDebug()
+        {
+            var allCards = await _cardRepository.GetAllCardsAsync();
+            var result = allCards.Select(card => new
+            {
+                card.CardNumber,
+                CardType = card.CardType.ToString(),
+                CardStatus = card.CardStatus.ToString(),
+                card.IsPinSet
+            });
+
+            return Ok(result);
+        }
+        [HttpGet("{userId}/{cardNumber}/actions")]
+        public async Task<IActionResult> GetActions(string userId, string cardNumber)
+        {
+            try
+            {
+                var cardDetails = await _mediator.Send(new GetCardDetailsQuery(userId, cardNumber));
+
+                var actions = await _mediator.Send(new GetAllowedActionsQuery(
+                    cardDetails.CardType,
+                    cardDetails.CardStatus,
+                    cardDetails.IsPinSet));
+
+                return Ok(actions);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { error = ex.Message });
+            }
         }
     }
 }
