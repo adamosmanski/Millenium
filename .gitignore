@@ -1,2 +1,5 @@
 ﻿.vs
 Millenium.View/obj
+Millenium.View/bin
+Millenium.API/bin
+Millenium.API/obj
