@@ -1,9 +1,12 @@
 
+using Millenium.Application.Handlers;
 using Millenium.Application.Interfaces;
+using Millenium.Application.Queries;
 using Millenium.Application.Services;
+using Millenium.Data.Interfaces;
+using Millenium.Data.Services;
 using System.Reflection;
 using System.Text.Json.Serialization;
-using Millenium.Application.Handlers;
 
 namespace Millenium.API
 {
@@ -19,18 +22,33 @@ namespace Millenium.API
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddScoped<ICardRepository, CardRepository>();
+            builder.Services.AddScoped<IActionService, ActionService>();
             builder.Services.AddMediatR(cfg =>
             {
                 cfg.RegisterServicesFromAssembly(typeof(GetAllowedActionsHandler).Assembly);
             });
 
-            builder.Services.AddScoped<IActionService, ActionService>();
 
             builder.Services.AddControllers()
                 .AddJsonOptions(opt =>
                 {
                     opt.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 });
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowBlazor",
+                    policy =>
+                    {
+                        policy.WithOrigins(
+                            "https://localhost:7059",  // Blazor dev server
+                            "http://localhost:5073",   // Blazor dev server (HTTP)
+                            "https://localhost:7219",   // API itself
+                            "http://localhost:5185")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                    });
+            });
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -39,7 +57,7 @@ namespace Millenium.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseCors("AllowBlazor");
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
