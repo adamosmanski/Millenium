@@ -1,0 +1,208 @@
+﻿@page "/"
+@using Millenium.View.Interface
+@using Millenium.View.Models
+@inject IActionService ActionService
+
+<h3>System zarządzania kartami Millennium</h3>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Wprowadź ID użytkownika</h5>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="input-group mb-3">
+                    <input @bind="userId" @bind:event="oninput" class="form-control" placeholder="np. User1" />
+                    <button class="btn btn-primary" @onclick="LoadUserData" disabled="@string.IsNullOrEmpty(userId)">
+                        <i class="bi bi-search"></i> Szukaj
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" @onclick="ClearError"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(userId))
+{
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Karty użytkownika: @userId</h5>
+        </div>
+        <div class="card-body">
+            @if (isLoading)
+            {
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Ładowanie...</span>
+                    </div>
+                    <p class="mt-2">Ładowanie kart...</p>
+                </div>
+            }
+            else if (userCards.Count == 0)
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Brak kart dla użytkownika @userId
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var card in userCards)
+                    {
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-light">
+                                    <h6 class="card-title mb-0">
+                                        <i class="bi bi-credit-card"></i> @card.CardNumber
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        <strong>Typ:</strong> <span class="badge bg-secondary">@card.CardType</span><br>
+                                        <strong>Status:</strong> <span class="badge bg-primary">@card.CardStatus</span><br>
+                                        <strong>PIN:</strong>
+                                        <span class="badge @(card.IsPinSet ? "bg-success" : "bg-danger")">
+                                            @(card.IsPinSet ? "USTAWIONY" : "BRAK")
+                                        </span>
+                                    </p>
+
+                                    @if (selectedCardNumber == card.CardNumber && isLoadingActions)
+                                    {
+                                        <div class="text-center py-2">
+                                            <div class="spinner-border spinner-border-sm text-success" role="status">
+                                                <span class="visually-hidden">Ładowanie akcji...</span>
+                                            </div>
+                                            <small class="text-muted">Ładowanie akcji...</small>
+                                        </div>
+                                    }
+                                    else if (selectedCardNumber == card.CardNumber)
+                                    {
+                                        <div class="mt-3">
+                                            <h6 class="border-bottom pb-2">Dostępne akcje:</h6>
+                                            @if (cardActions.Count == 0)
+                                            {
+                                                <div class="alert alert-warning py-2 mb-2">
+                                                    <small><i class="bi bi-exclamation-triangle"></i> Brak dostępnych akcji</small>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="list-group list-group-flush">
+                                                    @foreach (var action in cardActions)
+                                                    {
+                                                        <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-1">
+                                                            <small>@action</small>
+                                                        </div>
+                                                    }
+                                                </div>
+                                                <small class="text-muted">Liczba akcji: @cardActions.Count</small>
+                                            }
+                                        </div>
+                                    }
+
+                                    <div class="mt-3">
+                                        @if (selectedCardNumber == card.CardNumber)
+                                        {
+                                            <button class="btn btn-secondary btn-sm" @onclick="HideActions">
+                                                <i class="bi bi-chevron-up"></i> Ukryj akcje
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-primary btn-sm"
+                                                    @onclick="() => LoadCardActions(card.CardNumber)">
+                                                <i class="bi bi-chevron-down"></i> Pokaż akcje
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private string userId = string.Empty;
+    private string selectedCardNumber = string.Empty;
+    private string errorMessage = string.Empty;
+    private List<CardInfo> userCards = new();
+    private List<string> cardActions = new();
+    private bool isLoading = false;
+    private bool isLoadingActions = false;
+
+    private async Task LoadUserData()
+    {
+        if (string.IsNullOrEmpty(userId))
+            return;
+
+        isLoading = true;
+        errorMessage = string.Empty;
+        userCards.Clear();
+        selectedCardNumber = string.Empty;
+        cardActions.Clear();
+
+        try
+        {
+            userCards = await ActionService.GetUserCardsAsync(userId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Błąd podczas ładowania kart: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadCardActions(string cardNumber)
+    {
+        if (string.IsNullOrEmpty(userId))
+            return;
+        if (selectedCardNumber == cardNumber)
+        {
+            HideActions();
+            return;
+        }
+        selectedCardNumber = cardNumber;
+        isLoadingActions = true;
+        cardActions.Clear();
+        errorMessage = string.Empty;
+        try
+        {
+            cardActions = await ActionService.GetCardActionsAsync(userId, cardNumber);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Błąd podczas ładowania akcji: {ex.Message}";
+            selectedCardNumber = string.Empty;
+        }
+        finally
+        {
+            isLoadingActions = false;
+        }
+    }
+
+    private void HideActions()
+    {
+        selectedCardNumber = string.Empty;
+        cardActions.Clear();
+    }
+
+    private void ClearError()
+    {
+        errorMessage = string.Empty;
+    }
+}

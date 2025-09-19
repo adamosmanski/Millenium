@@ -35,6 +35,20 @@ namespace Millenium.API
                 {
                     opt.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 });
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowBlazor",
+                    policy =>
+                    {
+                        policy.WithOrigins(
+                            "https://localhost:7059",  // Blazor dev server
+                            "http://localhost:5073",   // Blazor dev server (HTTP)
+                            "https://localhost:7219",   // API itself
+                            "http://localhost:5185")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                    });
+            });
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -43,7 +57,7 @@ namespace Millenium.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseCors("AllowBlazor");
             app.UseHttpsRedirection();
 
             app.UseAuthorization();

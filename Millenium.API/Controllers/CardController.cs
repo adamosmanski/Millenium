@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualBasic;
+using Millenium.API.Models;
 using Millenium.Application.Queries;
 using Millenium.Data.Interfaces;
 using Millenium.Domain;
@@ -34,6 +35,29 @@ namespace Millenium.API.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("{userId}")]
+        public async Task<IActionResult> GetUserCards(string userId)
+        {
+            try
+            {
+                var userCards = await _cardRepository.GetUserCardsAsync(userId);
+                var result = userCards.Select(card => new CardInfoResponse
+                {
+                    CardNumber = card.CardNumber,
+                    CardType = card.CardType.ToString(),
+                    CardStatus = card.CardStatus.ToString(),
+                    IsPinSet = card.IsPinSet
+                });
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
         [HttpGet("{userId}/{cardNumber}/actions")]
         public async Task<IActionResult> GetActions(string userId, string cardNumber)
         {
