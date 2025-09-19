@@ -54,5 +54,14 @@ namespace Millenium.Data.Services
             }
             return userCards;
         }
+        public async Task<IEnumerable<CardDetails>> GetUserCardsAsync(string userId)
+        {
+            await Task.Delay(50);
+
+            if (_userCards.TryGetValue(userId, out var cards))
+                return cards.Values;
+
+            return Enumerable.Empty<CardDetails>();
+        }
     }
 }

@@ -10,6 +10,7 @@ namespace Millenium.Data.Interfaces
     public interface ICardRepository
     {
         Task<CardDetails?> GetCardAsync(string userId, string cardNumber);
+        Task<IEnumerable<CardDetails>> GetUserCardsAsync(string userId);
         Task<IEnumerable<CardDetails>> GetAllCardsAsync();
     }
 }

@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Millenium.Data\Millenium.Data.csproj" />
     <ProjectReference Include="..\Millenium.Domain\Millenium.Domain.csproj" />
   </ItemGroup>
 
